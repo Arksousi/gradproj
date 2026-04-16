@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "505901603194",
+    "project_id": "psycare-70248",
+    "storage_bucket": "psycare-70248.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505901603194:android:8744a8593763d17da7dec3",
+        "android_client_info": {
+          "package_name": "com.bilal.psycare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsgfdoAeUImq9oHHOfM3tIggxhdggGJt0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
