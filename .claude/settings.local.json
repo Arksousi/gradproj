@@ -4,7 +4,9 @@
       "Bash(flutter analyze *)",
       "Bash(dart analyze *)",
       "Bash(ls lib/presentation/screens/settings/)",
-      "Bash(ls lib/core/localization/)"
+      "Bash(ls lib/core/localization/)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
