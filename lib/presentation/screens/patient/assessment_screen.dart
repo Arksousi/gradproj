@@ -7,10 +7,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/assessment_model.dart';
 import '../../../domain/providers/patient_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/patient/question_card.dart';
+
+Future<void> _confirmLeaveAssessment(BuildContext context) async {
+  final leave = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(context.tr('leaveAssessment')),
+      content: Text(context.tr('leaveBody')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(context.tr('keepGoing')),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+          child: Text(context.tr('leave')),
+        ),
+      ],
+    ),
+  );
+  if ((leave ?? false) && context.mounted) {
+    Navigator.pushNamedAndRemoveUntil(
+        context, AppRoutes.patientDashboard, (_) => false);
+  }
+}
 
 /// Full-screen assessment form showing one question per page.
 /// Uses a [PageView] for smooth swipe navigation.
@@ -87,6 +114,16 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                       },
                       icon: const Icon(Icons.arrow_back_ios_rounded,
                           color: AppColors.textPrimary, size: 20),
+                    ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          _confirmLeaveAssessment(context),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: Text(context.tr('leave')),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        textStyle: const TextStyle(fontSize: 13),
+                      ),
                     ),
                     Expanded(
                       child: Column(

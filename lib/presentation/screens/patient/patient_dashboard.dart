@@ -6,9 +6,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
-import '../../../core/constants/app_strings.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../domain/providers/auth_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
+
+const int _kOpenHour = 9;
+const int _kCloseHour = 22;
+
+bool _isWithinHours() {
+  final now = DateTime.now();
+  return now.hour >= _kOpenHour && now.hour < _kCloseHour;
+}
 
 /// Patient's home screen — displays their name and quick-action cards.
 class PatientDashboard extends ConsumerWidget {
@@ -35,20 +43,21 @@ class PatientDashboard extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          Image.asset('assets/images/logo.png', width: 64, height: 64),
+                          Image.asset('assets/images/logo.png',
+                              width: 64, height: 64),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Hello, 👋',
-                                style: TextStyle(
+                              Text(
+                                '${context.tr('hello')}, 👋',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               Text(
-                                user?.name ?? 'Patient',
+                                user?.name ?? context.tr('rolePatient'),
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -58,19 +67,15 @@ class PatientDashboard extends ConsumerWidget {
                             ],
                           ),
                         ],
-                      ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1, end: 0),
-                      // Sign out button
+                      ).animate().fadeIn(duration: 400.ms).slideX(
+                          begin: -0.1, end: 0),
+                      // Settings button
                       IconButton(
-                        onPressed: () async {
-                          await ref.read(authProvider.notifier).signOut();
-                          if (context.mounted) {
-                            Navigator.pushReplacementNamed(
-                                context, AppRoutes.login);
-                          }
-                        },
-                        icon: const Icon(Icons.logout_rounded,
+                        onPressed: () => Navigator.pushNamed(
+                            context, AppRoutes.settings),
+                        icon: const Icon(Icons.settings_rounded,
                             color: AppColors.textSecondary),
-                        tooltip: AppStrings.logout,
+                        tooltip: context.tr('settings'),
                       ),
                     ],
                   ),
@@ -86,12 +91,21 @@ class PatientDashboard extends ConsumerWidget {
                   child: patientAsync.when(
                     data: (patient) => _StatusCard(
                       hasSubmitted: patient?.submittedAt != null,
-                      answeredCount: patient?.assessment.length ?? 0,
                     ),
                     loading: () => const _StatusCardSkeleton(),
                     error: (_, __) => const SizedBox.shrink(),
                   ),
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+              // Live chat button
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _LiveChatButton(),
+                ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.1, end: 0),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 28)),
@@ -101,7 +115,7 @@ class PatientDashboard extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'What would you like to do?',
+                    context.tr('whatToDo'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ).animate().fadeIn(delay: 300.ms),
                 ),
@@ -116,28 +130,28 @@ class PatientDashboard extends ConsumerWidget {
                   delegate: SliverChildListDelegate([
                     _ActionCard(
                       icon: Icons.assignment_rounded,
-                      title: 'Mental Health Assessment',
-                      subtitle: 'Answer 30 questions about your wellbeing',
+                      title: context.tr('mentalHealthAssessment'),
+                      subtitle: context.tr('answerQuestions'),
                       color: AppColors.primary,
                       delay: 400,
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRoutes.assessment),
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.assessment),
                     ),
                     const SizedBox(height: 14),
                     _ActionCard(
                       icon: Icons.edit_note_rounded,
-                      title: 'Describe Your Feelings',
-                      subtitle: 'Write about what\'s on your mind',
+                      title: context.tr('describeYourFeelings'),
+                      subtitle: context.tr('writeAboutMind'),
                       color: AppColors.accent,
                       delay: 500,
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRoutes.description),
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.description),
                     ),
                     const SizedBox(height: 14),
                     _ActionCard(
                       icon: Icons.info_outline_rounded,
-                      title: 'About PsyCare',
-                      subtitle: 'Learn how we protect your privacy',
+                      title: context.tr('aboutPsycare'),
+                      subtitle: context.tr('learnPrivacy'),
                       color: AppColors.success,
                       delay: 600,
                       onTap: () => _showAboutDialog(context),
@@ -145,6 +159,8 @@ class PatientDashboard extends ConsumerWidget {
                   ]),
                 ),
               ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
@@ -158,15 +174,16 @@ class PatientDashboard extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(AppStrings.appName),
+        title: Text(context.tr('appName')),
         content: const Text(
-          'PsyCare helps you connect with licensed therapists and track your mental wellbeing. '
-          'Your data is encrypted and only shared with your assigned therapist.',
+          'PsyCare helps you connect with licensed therapists and track your '
+          'mental wellbeing. Your data is encrypted and only shared with your '
+          'assigned therapist.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Got it'),
+            child: Text(context.tr('gotIt')),
           ),
         ],
       ),
@@ -174,11 +191,99 @@ class PatientDashboard extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Live chat button
+// ---------------------------------------------------------------------------
+
+class _LiveChatButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final available = _isWithinHours();
+
+    return GestureDetector(
+      onTap: available
+          ? () => Navigator.pushNamed(
+                context,
+                AppRoutes.postAssessment,
+                arguments: <String, String>{
+                  'patientSummary': '',
+                  'clinicalReport': '',
+                },
+              )
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: available ? AppColors.primaryGradient : null,
+          color: available ? null : AppColors.border,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: available
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.support_agent_rounded,
+              color: available ? Colors.white : AppColors.textHint,
+              size: 26,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('talkSomeoneNow'),
+                    style: TextStyle(
+                      color: available ? Colors.white : AppColors.textHint,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    available
+                        ? context.tr('connectTherapistNow')
+                        : context.tr('availableHours'),
+                    style: TextStyle(
+                      color: available
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : AppColors.textHint,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              available
+                  ? Icons.arrow_forward_ios_rounded
+                  : Icons.lock_clock_rounded,
+              color: available ? Colors.white : AppColors.textHint,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Status card
+// ---------------------------------------------------------------------------
+
 class _StatusCard extends StatelessWidget {
   final bool hasSubmitted;
-  final int answeredCount;
 
-  const _StatusCard({required this.hasSubmitted, required this.answeredCount});
+  const _StatusCard({required this.hasSubmitted});
 
   @override
   Widget build(BuildContext context) {
@@ -203,8 +308,8 @@ class _StatusCard extends StatelessWidget {
               children: [
                 Text(
                   hasSubmitted
-                      ? 'Assessment Submitted ✓'
-                      : 'Assessment Pending',
+                      ? context.tr('assessmentSubmitted')
+                      : context.tr('assessmentPending'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -214,8 +319,8 @@ class _StatusCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   hasSubmitted
-                      ? 'Your therapist has been notified'
-                      : 'Complete your assessment to get started',
+                      ? context.tr('therapistNotified')
+                      : context.tr('completeAssessment'),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 12,
@@ -251,6 +356,10 @@ class _StatusCardSkeleton extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Action card
+// ---------------------------------------------------------------------------
 
 class _ActionCard extends StatelessWidget {
   final IconData icon;
@@ -311,7 +420,8 @@ class _ActionCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(subtitle,
                       style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
+                          fontSize: 12,
+                          color: AppColors.textSecondary)),
                 ],
               ),
             ),

@@ -68,4 +68,24 @@ class TherapistRepository implements TherapistRepositoryBase {
       throw Exception('Failed to fetch therapists: $e');
     }
   }
+
+  /// Returns a real-time stream of all therapists.
+  Stream<List<TherapistModel>> watchAllTherapists() {
+    return _firebase.firestore.collection('therapists').snapshots().map(
+        (snap) =>
+            snap.docs.map((doc) => TherapistModel.fromMap(doc.id, doc.data())).toList());
+  }
+
+  /// Updates therapist availability flags.
+  Future<void> updateAvailability(String uid,
+      {bool? isOnShift, bool? isAvailableForImmediate}) async {
+    final data = <String, dynamic>{};
+    if (isOnShift != null) { data['isOnShift'] = isOnShift; }
+    if (isAvailableForImmediate != null) {
+      data['isAvailableForImmediate'] = isAvailableForImmediate;
+    }
+    if (data.isNotEmpty) {
+      await _firebase.firestore.collection('therapists').doc(uid).update(data);
+    }
+  }
 }

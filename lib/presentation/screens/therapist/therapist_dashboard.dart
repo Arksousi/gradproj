@@ -6,7 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
-import '../../../core/constants/app_strings.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../domain/providers/auth_provider.dart';
 import '../../../domain/providers/therapist_provider.dart';
 
@@ -35,20 +35,21 @@ class TherapistDashboard extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          Image.asset('assets/images/logo.png', width: 64, height: 64),
+                          Image.asset('assets/images/logo.png',
+                              width: 64, height: 64),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Good day, 👨‍⚕️',
-                                style: TextStyle(
+                              Text(
+                                '${context.tr('goodDay')}, 👨‍⚕️',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               Text(
-                                user?.name ?? 'Therapist',
+                                user?.name ?? context.tr('roleTherapist'),
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -58,18 +59,15 @@ class TherapistDashboard extends ConsumerWidget {
                             ],
                           ),
                         ],
-                      ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1, end: 0),
+                      ).animate().fadeIn(duration: 400.ms).slideX(
+                          begin: -0.1, end: 0),
+                      // Settings button
                       IconButton(
-                        onPressed: () async {
-                          await ref.read(authProvider.notifier).signOut();
-                          if (context.mounted) {
-                            Navigator.pushReplacementNamed(
-                                context, AppRoutes.login);
-                          }
-                        },
-                        icon: const Icon(Icons.logout_rounded,
+                        onPressed: () => Navigator.pushNamed(
+                            context, AppRoutes.settings),
+                        icon: const Icon(Icons.settings_rounded,
                             color: AppColors.textSecondary),
-                        tooltip: AppStrings.logout,
+                        tooltip: context.tr('settings'),
                       ),
                     ],
                   ),
@@ -87,7 +85,7 @@ class TherapistDashboard extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: _StatCard(
-                            label: 'Total Patients',
+                            label: context.tr('totalPatients'),
                             value: '${patients.length}',
                             icon: Icons.people_rounded,
                             color: AppColors.primary,
@@ -96,8 +94,9 @@ class TherapistDashboard extends ConsumerWidget {
                         const SizedBox(width: 14),
                         Expanded(
                           child: _StatCard(
-                            label: 'Submitted',
-                            value: '${patients.where((p) => p.submittedAt != null).length}',
+                            label: context.tr('submitted'),
+                            value:
+                                '${patients.where((p) => p.submittedAt != null).length}',
                             icon: Icons.assignment_turned_in_rounded,
                             color: AppColors.success,
                           ),
@@ -110,28 +109,40 @@ class TherapistDashboard extends ConsumerWidget {
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // Action card
+              // Incoming requests card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _IncomingRequestsCard(),
+                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // My patients action card
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _QuickActionCard(
-                    onViewPatients: () => Navigator.pushNamed(
-                        context, AppRoutes.patientList),
+                    onViewPatients: () =>
+                        Navigator.pushNamed(context, AppRoutes.patientList),
                   ),
-                ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1, end: 0),
+                ).animate().fadeIn(delay: 380.ms).slideY(begin: 0.1, end: 0),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // Info card
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _InfoCard(),
-                ).animate().fadeIn(delay: 450.ms),
+                ).animate().fadeIn(delay: 460.ms),
               ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
@@ -238,6 +249,71 @@ class _StatsRowSkeleton extends StatelessWidget {
   }
 }
 
+class _IncomingRequestsCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () =>
+          Navigator.pushNamed(context, AppRoutes.incomingRequests),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.error.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.notifications_active_rounded,
+                  color: AppColors.error, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('incomingRequests'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    context.tr('patientsWaiting'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: AppColors.textHint, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _QuickActionCard extends StatelessWidget {
   final VoidCallback onViewPatients;
 
@@ -269,16 +345,16 @@ class _QuickActionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    AppStrings.myPatients,
-                    style: TextStyle(
+                  Text(
+                    context.tr('myPatients'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    'View assessments & AI summaries',
+                    context.tr('viewAssessments'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 12,
@@ -304,17 +380,18 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.accentLight.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.lightbulb_rounded,
+          const Icon(Icons.lightbulb_rounded,
               color: AppColors.accent, size: 26),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Use the AI Summarize feature on patient details to get professional insights powered by Groq.',
-              style: TextStyle(
+              context.tr('aiInsightTip'),
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 height: 1.4,
