@@ -33,32 +33,37 @@ class TherapistDashboard extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Image.asset('assets/images/logo.png',
-                              width: 64, height: 64),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${context.tr('goodDay')}, 👨‍⚕️',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textSecondary,
-                                ),
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Image.asset('assets/images/logo.png',
+                                width: 64, height: 64),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${context.tr('goodDay')}, 👨‍⚕️',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    user?.name ?? context.tr('roleTherapist'),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                user?.name ?? context.tr('roleTherapist'),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ).animate().fadeIn(duration: 400.ms).slideX(
                           begin: -0.1, end: 0),
                       // Settings button
@@ -192,25 +197,28 @@ class _StatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

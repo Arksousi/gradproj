@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/helpers.dart';
 import '../../../data/models/assessment_model.dart';
 import '../../../domain/providers/patient_provider.dart';
 import '../../widgets/common/custom_button.dart';
@@ -64,15 +65,22 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
     super.dispose();
   }
 
-  void _goToNext(int current) {
+  Future<void> _goToNext(int current) async {
     if (current < _totalQuestions - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      // All questions answered — proceed to description
-      Navigator.pushNamed(context, AppRoutes.description);
+      final success =
+          await ref.read(assessmentProvider.notifier).submitAssessment();
+      if (!mounted) return;
+      if (success) {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.assessmentComplete, (_) => false);
+      } else {
+        Helpers.showError(context, 'Failed to submit. Please try again.');
+      }
     }
   }
 
@@ -224,9 +232,10 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
       children: [
         if (isLast && isAnswered)
           CustomButton(
-            label: 'Continue to Description',
-            onPressed: () => _goToNext(current),
-            icon: Icons.arrow_forward_rounded,
+            label: 'Complete Assessment',
+            onPressed: state.isSubmitting ? null : () => _goToNext(current),
+            isLoading: state.isSubmitting,
+            icon: Icons.check_rounded,
           ).animate().fadeIn(duration: 300.ms)
         else
           CustomButton(

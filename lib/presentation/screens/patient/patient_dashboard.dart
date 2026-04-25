@@ -41,32 +41,37 @@ class PatientDashboard extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Image.asset('assets/images/logo.png',
-                              width: 64, height: 64),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${context.tr('hello')}, 👋',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textSecondary,
-                                ),
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Image.asset('assets/images/logo.png',
+                                width: 64, height: 64),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${context.tr('hello')}, 👋',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    user?.name ?? context.tr('rolePatient'),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                user?.name ?? context.tr('rolePatient'),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ).animate().fadeIn(duration: 400.ms).slideX(
                           begin: -0.1, end: 0),
                       // Settings button
@@ -135,7 +140,7 @@ class PatientDashboard extends ConsumerWidget {
                       color: AppColors.primary,
                       delay: 400,
                       onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.assessment),
+                          Navigator.pushNamed(context, AppRoutes.assessmentIntro),
                     ),
                     const SizedBox(height: 14),
                     _ActionCard(

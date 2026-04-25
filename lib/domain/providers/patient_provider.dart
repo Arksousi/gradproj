@@ -86,7 +86,7 @@ class AssessmentNotifier extends StateNotifier<AssessmentState> {
     state = state.copyWith(currentPage: page);
   }
 
-  Future<bool> submitAssessment(String description) async {
+  Future<bool> submitAssessment({String description = ''}) async {
     state = state.copyWith(isSubmitting: true, clearError: true);
     try {
       // Find first available therapist (simplified assignment)

@@ -1,0 +1,2 @@
+// Copy this file to api_keys.dart and replace with your actual Groq API key.
+const kGroqApiKey = 'YOUR_GROQ_API_KEY_HERE';

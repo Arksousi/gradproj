@@ -11,7 +11,9 @@ class AppRoutes {
 
   // Patient routes
   static const String patientDashboard = '/patient-dashboard';
+  static const String assessmentIntro = '/assessment-intro';
   static const String assessment = '/assessment';
+  static const String assessmentComplete = '/assessment-complete';
   static const String description = '/description';
 
   // Therapist routes

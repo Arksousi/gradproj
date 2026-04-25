@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   // Ensure Flutter engine is initialized before platform channel calls
@@ -27,7 +28,9 @@ Future<void> main() async {
 
   // Initialize Firebase — requires google-services.json (Android)
   // and GoogleService-Info.plist (iOS) to be configured.
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Wrap the entire app in ProviderScope to enable Riverpod state management
   runApp(

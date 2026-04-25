@@ -12,6 +12,8 @@ import 'domain/providers/locale_provider.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/patient/ai_summary_screen.dart';
+import 'presentation/screens/patient/assessment_complete_screen.dart';
+import 'presentation/screens/patient/assessment_intro_screen.dart';
 import 'presentation/screens/patient/assessment_screen.dart';
 import 'presentation/screens/patient/booking_consent_screen.dart';
 import 'presentation/screens/patient/chat_screen.dart';
@@ -63,7 +65,9 @@ class PsyCareApp extends ConsumerWidget {
 
         // Patient routes
         AppRoutes.patientDashboard: (_) => const PatientDashboard(),
+        AppRoutes.assessmentIntro: (_) => const AssessmentIntroScreen(),
         AppRoutes.assessment: (_) => const AssessmentScreen(),
+        AppRoutes.assessmentComplete: (_) => const AssessmentCompleteScreen(),
         AppRoutes.description: (_) => const DescriptionScreen(),
         AppRoutes.aiSummary: (_) => const AiSummaryScreen(),
         AppRoutes.postAssessment: (_) => const PostAssessmentScreen(),

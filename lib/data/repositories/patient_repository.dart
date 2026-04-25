@@ -123,6 +123,23 @@ class PatientRepository implements PatientRepositoryBase {
     }
   }
 
+  /// Saves the emotional support session data as a nested map on the patient doc.
+  Future<void> saveEmotionalSupport({
+    required String uid,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      await _firebase.setDocument('patients', uid, {
+        'emotionalSupport': {
+          ...data,
+          'timestamp': FieldValue.serverTimestamp(),
+        },
+      });
+    } catch (e) {
+      throw Exception('Failed to save emotional support data: $e');
+    }
+  }
+
   /// Returns a real-time stream of all patients for a given therapist.
   Stream<List<PatientModel>> watchPatientsForTherapist(String therapistId) {
     return _firebase.firestore
