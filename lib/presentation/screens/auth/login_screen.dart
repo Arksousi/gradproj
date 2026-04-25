@@ -13,6 +13,7 @@ import '../../../domain/providers/auth_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_textfield.dart';
 import '../../widgets/common/loading_widget.dart';
+import '../../widgets/common/psycare_logo.dart';
 
 /// Login screen — entry point for all returning users.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -165,10 +166,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildLogo() {
-    return Image.asset(
-      'assets/images/logo.png',
-      width: 210,
-      height: 210,
-    ).animate().scale(duration: 600.ms, curve: Curves.elasticOut).fadeIn(duration: 400.ms);
+    return const PsyCareLogo(size: 120, showText: true)
+        .animate()
+        .scale(duration: 600.ms, curve: Curves.elasticOut)
+        .fadeIn(duration: 400.ms);
   }
 }

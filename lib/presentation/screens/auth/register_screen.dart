@@ -13,6 +13,7 @@ import '../../../domain/providers/auth_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_textfield.dart';
 import '../../widgets/common/loading_widget.dart';
+import '../../widgets/common/psycare_logo.dart';
 
 /// Registration screen for new patients and therapists.
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -190,11 +191,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildHeader(BuildContext context) {
     return Column(
       children: [
-        Image.asset(
-          'assets/images/logo.png',
-          width: 170,
-          height: 170,
-        ).animate().scale(duration: 600.ms, curve: Curves.elasticOut).fadeIn(duration: 400.ms),
+        const PsyCareLogo(size: 110, showText: true)
+            .animate()
+            .scale(duration: 600.ms, curve: Curves.elasticOut)
+            .fadeIn(duration: 400.ms),
         const SizedBox(height: 4),
         Text(
           'Create Account',

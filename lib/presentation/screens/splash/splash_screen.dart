@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../domain/providers/auth_provider.dart';
+import '../../widgets/common/psycare_logo.dart';
 
 /// Splash screen shown on app launch.
 /// Waits 2 seconds, then navigates based on authentication state.
@@ -55,11 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // PsyCare logo
-              Image.asset(
-                'assets/images/logo.png',
-                width: 260,
-                height: 260,
-              )
+              const PsyCareLogo(size: 160, showText: true)
                   .animate()
                   .scale(duration: 700.ms, curve: Curves.elasticOut)
                   .fadeIn(duration: 500.ms),
