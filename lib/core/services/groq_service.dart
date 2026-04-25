@@ -10,7 +10,7 @@ class GroqService {
 
   static const String _apiUrl =
       'https://api.groq.com/openai/v1/chat/completions';
-  static const String _model = 'llama-3.3';
+  static const String _model = 'llama-3.3-70b-versatile';
   static const String _emotionalModel = 'llama-3.3-70b-versatile';
 
   static const String _systemPrompt =
