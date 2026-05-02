@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../domain/providers/auth_provider.dart';
+import '../../../domain/providers/booking_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
 
 const int _kOpenHour = 9;
@@ -26,6 +27,8 @@ class PatientDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final patientAsync = ref.watch(currentPatientProvider);
+    final bookingsAsync =
+        ref.watch(patientBookingsProvider(user?.uid ?? ''));
 
     return Scaffold(
       body: Container(
@@ -104,6 +107,22 @@ class PatientDashboard extends ConsumerWidget {
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+              // Booking status card (only when there's an active booking)
+              SliverToBoxAdapter(
+                child: bookingsAsync.whenData((bookings) {
+                  final active = bookings
+                      .where((b) =>
+                          b.status == 'pending' || b.status == 'confirmed')
+                      .toList();
+                  if (active.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                    child: _BookingStatusCard(booking: active.first),
+                  ).animate().fadeIn(delay: 260.ms).slideY(begin: 0.1, end: 0);
+                }).value ??
+                    const SizedBox.shrink(),
+              ),
 
               // Live chat button
               SliverToBoxAdapter(
@@ -189,6 +208,66 @@ class PatientDashboard extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(context.tr('gotIt')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Booking status card
+// ---------------------------------------------------------------------------
+
+class _BookingStatusCard extends StatelessWidget {
+  final dynamic booking; // BookingRequest
+
+  const _BookingStatusCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = booking.status == 'pending';
+    final color = isPending ? AppColors.warning : AppColors.success;
+    final icon = isPending ? Icons.hourglass_top_rounded : Icons.check_circle_rounded;
+    final therapistLabel = booking.therapistName.isNotEmpty
+        ? booking.therapistName
+        : context.tr('yourTherapist');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPending
+                      ? context.tr('bookingStatusPending')
+                      : context.tr('bookingStatusConfirmed'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  therapistLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),

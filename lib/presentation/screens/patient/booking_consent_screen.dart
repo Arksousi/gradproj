@@ -49,6 +49,7 @@ class _BookingConsentScreenState
       patientId: user?.uid ?? '',
       patientName: user?.name ?? '',
       therapistId: therapist.uid,
+      therapistName: therapist.name,
       sessionType: _selectedType,
     );
 

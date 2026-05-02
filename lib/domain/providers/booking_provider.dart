@@ -40,6 +40,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required String patientId,
     required String patientName,
     required String therapistId,
+    required String therapistName,
     required String sessionType,
   }) async {
     state = state.copyWith(isLoading: true);
@@ -49,6 +50,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
         patientId: patientId,
         patientName: patientName,
         therapistId: therapistId,
+        therapistName: therapistName,
         status: 'pending',
         requestedAt: DateTime.now(),
         sessionType: sessionType,
@@ -61,6 +63,41 @@ class BookingNotifier extends StateNotifier<BookingState> {
     }
   }
 }
+
+// ── Therapist-side: stream pending booking requests ──────────────────────────
+final pendingBookingsProvider =
+    StreamProvider.autoDispose.family<List<BookingRequest>, String>(
+  (ref, therapistId) =>
+      ref.read(bookingRepositoryProvider).streamPendingBookings(therapistId),
+);
+
+// ── Patient-side: stream own booking requests ────────────────────────────────
+final patientBookingsProvider =
+    StreamProvider.autoDispose.family<List<BookingRequest>, String>(
+  (ref, patientId) =>
+      ref.read(bookingRepositoryProvider).streamPatientBookings(patientId),
+);
+
+// ── Therapist-side: accept / decline actions ─────────────────────────────────
+class BookingActionNotifier extends StateNotifier<AsyncValue<void>> {
+  final BookingRepository _repo;
+  BookingActionNotifier(this._repo) : super(const AsyncData(null));
+
+  Future<void> accept(String bookingId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _repo.acceptBooking(bookingId));
+  }
+
+  Future<void> decline(String bookingId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _repo.declineBooking(bookingId));
+  }
+}
+
+final bookingActionProvider =
+    StateNotifierProvider.autoDispose<BookingActionNotifier, AsyncValue<void>>(
+  (ref) => BookingActionNotifier(ref.read(bookingRepositoryProvider)),
+);
 
 final bookingProvider =
     StateNotifierProvider.autoDispose<BookingNotifier, BookingState>(

@@ -31,6 +31,33 @@ class BookingRepository {
       return bookings;
     });
   }
+
+  Future<void> acceptBooking(String bookingId) async {
+    await _firebase.firestore
+        .collection('booking_requests')
+        .doc(bookingId)
+        .update({'status': 'confirmed'});
+  }
+
+  Future<void> declineBooking(String bookingId) async {
+    await _firebase.firestore
+        .collection('booking_requests')
+        .doc(bookingId)
+        .update({'status': 'declined'});
+  }
+
+  Stream<List<BookingRequest>> streamPatientBookings(String patientId) {
+    return _firebase.firestore
+        .collection('booking_requests')
+        .where('patientId', isEqualTo: patientId)
+        .snapshots()
+        .map((snap) {
+      final bookings =
+          snap.docs.map((d) => BookingRequest.fromMap(d.id, d.data())).toList();
+      bookings.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+      return bookings;
+    });
+  }
 }
 
 final bookingRepositoryProvider =

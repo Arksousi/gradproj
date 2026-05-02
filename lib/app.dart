@@ -25,6 +25,7 @@ import 'presentation/screens/patient/therapist_directory_screen.dart';
 import 'presentation/screens/patient/therapist_profile_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
 import 'presentation/screens/splash/splash_screen.dart';
+import 'presentation/screens/therapist/booking_requests_screen.dart';
 import 'presentation/screens/therapist/incoming_requests_screen.dart';
 import 'presentation/screens/therapist/patient_detail_screen.dart';
 import 'presentation/screens/therapist/patient_list_screen.dart';
@@ -84,6 +85,7 @@ class PsyCareApp extends ConsumerWidget {
         AppRoutes.patientList: (_) => const PatientListScreen(),
         AppRoutes.patientDetail: (_) => const PatientDetailScreen(),
         AppRoutes.incomingRequests: (_) => const IncomingRequestsScreen(),
+        AppRoutes.bookingRequests: (_) => const BookingRequestsScreen(),
 
         // Shared
         AppRoutes.settings: (_) => const SettingsScreen(),

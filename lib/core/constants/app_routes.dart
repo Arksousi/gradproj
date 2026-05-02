@@ -34,6 +34,7 @@ class AppRoutes {
 
   // New therapist routes
   static const String incomingRequests = '/incoming-requests';
+  static const String bookingRequests = '/booking-requests';
 
   // Shared routes
   static const String settings = '/settings';

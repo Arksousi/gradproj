@@ -8,6 +8,7 @@ class BookingRequest {
   final String patientId;
   final String patientName;
   final String therapistId;
+  final String therapistName;
   final String status; // 'pending' | 'confirmed' | 'declined'
   final DateTime requestedAt;
   final String sessionType; // 'chat' | 'video' | 'in-person'
@@ -18,6 +19,7 @@ class BookingRequest {
     required this.patientId,
     required this.patientName,
     required this.therapistId,
+    this.therapistName = '',
     required this.status,
     required this.requestedAt,
     required this.sessionType,
@@ -30,6 +32,7 @@ class BookingRequest {
         patientId: map['patientId'] as String? ?? '',
         patientName: map['patientName'] as String? ?? '',
         therapistId: map['therapistId'] as String? ?? '',
+        therapistName: map['therapistName'] as String? ?? '',
         status: map['status'] as String? ?? 'pending',
         requestedAt:
             (map['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -41,6 +44,7 @@ class BookingRequest {
         'patientId': patientId,
         'patientName': patientName,
         'therapistId': therapistId,
+        'therapistName': therapistName,
         'status': status,
         'requestedAt': Timestamp.fromDate(requestedAt),
         'sessionType': sessionType,

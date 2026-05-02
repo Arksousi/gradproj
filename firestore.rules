@@ -1,0 +1,150 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ───────────────────────────────────────────────────
+
+    // Is the request from a signed-in user?
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Is the signed-in user the document owner?
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Read the caller's user role from the users collection.
+    function callerRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isPatient() {
+      return isAuth() && callerRole() == 'patient';
+    }
+
+    function isTherapist() {
+      return isAuth() && callerRole() == 'therapist';
+    }
+
+    // Is the caller the assigned therapist of this patient document?
+    function isAssignedTherapist(patientData) {
+      return isAuth() && patientData.therapistId == request.auth.uid;
+    }
+
+    // ─── users/{uid} ────────────────────────────────────────────────────────
+    // Only the user themselves can read or write their own profile.
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ─── patients/{uid} ─────────────────────────────────────────────────────
+    // - Patient: full read/write on their own document.
+    // - Therapist: read-only if they are the assigned therapist
+    //   (patientData.therapistId == caller uid).
+    match /patients/{uid} {
+      allow read, write: if isOwner(uid);
+      allow read: if isTherapist() && isAssignedTherapist(resource.data);
+      // Therapist also needs to update the patient's therapistId on assignment.
+      allow update: if isTherapist() && request.auth.uid != null
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['therapistId']);
+    }
+
+    // ─── therapists/{uid} ───────────────────────────────────────────────────
+    // - Any authenticated user can read therapist profiles (directory browsing).
+    // - Only the therapist themselves can write/update their own profile.
+    match /therapists/{uid} {
+      allow read: if isAuth();
+      allow write: if isOwner(uid);
+      // Allow therapist repository to arrayUnion patientId into the patients field.
+      allow update: if isAuth()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['patients']);
+    }
+
+    // ─── booking_requests/{id} ──────────────────────────────────────────────
+    // - Patient: create (must set own patientId), read own requests.
+    // - Therapist: read + update (accept/decline) requests addressed to them.
+    match /booking_requests/{id} {
+      allow create: if isPatient()
+                    && request.resource.data.patientId == request.auth.uid;
+      allow read: if isAuth()
+                  && (resource.data.patientId == request.auth.uid
+                      || resource.data.therapistId == request.auth.uid);
+      allow update: if isTherapist()
+                    && resource.data.therapistId == request.auth.uid;
+    }
+
+    // ─── immediate_requests/{id} ────────────────────────────────────────────
+    // - Patient: create (must set own patientId), read their own request.
+    // - Therapist: read all pending requests (to show the queue) + update to accept.
+    match /immediate_requests/{id} {
+      allow create: if isPatient()
+                    && request.resource.data.patientId == request.auth.uid;
+      allow read: if isAuth()
+                  && (resource.data.patientId == request.auth.uid
+                      || isTherapist());
+      allow update: if isTherapist();
+    }
+
+    // ─── chat_sessions/{sessionId} ──────────────────────────────────────────
+    // Only the two participants in the session (patientId + therapistId) can
+    // read, create, or update the session document and its messages.
+    match /chat_sessions/{sessionId} {
+      function isParticipant() {
+        return isAuth()
+               && (resource.data.patientId == request.auth.uid
+                   || resource.data.therapistId == request.auth.uid);
+      }
+
+      allow create: if isAuth();
+      allow read, update: if isParticipant();
+
+      match /messages/{messageId} {
+        allow read: if isAuth()
+                    && (get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.patientId == request.auth.uid
+                        || get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.therapistId == request.auth.uid);
+        allow create: if isAuth()
+                      && (get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.patientId == request.auth.uid
+                          || get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.therapistId == request.auth.uid)
+                      && request.resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // ─── chats/{chatId} ─────────────────────────────────────────────────────
+    // Persistent therapist–patient chat. chatId format: {therapistId}_{patientId}
+    // Both participants can read/write the thread and its messages.
+    match /chats/{chatId} {
+      function isChatParticipant() {
+        return isAuth()
+               && (resource.data.patientId == request.auth.uid
+                   || resource.data.therapistId == request.auth.uid);
+      }
+
+      allow create: if isAuth();
+      allow read, update: if isChatParticipant();
+
+      match /messages/{messageId} {
+        allow read: if isAuth()
+                    && (get(/databases/$(database)/documents/chats/$(chatId)).data.patientId == request.auth.uid
+                        || get(/databases/$(database)/documents/chats/$(chatId)).data.therapistId == request.auth.uid);
+        allow create: if isAuth()
+                      && (get(/databases/$(database)/documents/chats/$(chatId)).data.patientId == request.auth.uid
+                          || get(/databases/$(database)/documents/chats/$(chatId)).data.therapistId == request.auth.uid)
+                      && request.resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // ─── videoCalls/{callId} ────────────────────────────────────────────────
+    // Only the two call participants (therapistId + patientId) can read/write.
+    match /videoCalls/{callId} {
+      allow create: if isAuth();
+      allow read, update: if isAuth()
+                          && (resource.data.therapistId == request.auth.uid
+                              || resource.data.patientId == request.auth.uid);
+    }
+
+  }
+}

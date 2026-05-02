@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../domain/providers/auth_provider.dart';
+import '../../../domain/providers/booking_provider.dart';
 import '../../../domain/providers/therapist_provider.dart';
 
 /// Therapist home screen showing a summary of their patient load.
@@ -18,6 +19,8 @@ class TherapistDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final patientsAsync = ref.watch(therapistPatientsProvider);
+    final pendingBookings =
+        ref.watch(pendingBookingsProvider(user?.uid ?? ''));
 
     return Scaffold(
       body: Container(
@@ -116,12 +119,24 @@ class TherapistDashboard extends ConsumerWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
+              // Session booking requests card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _SessionRequestsCard(
+                    pendingCount: pendingBookings.whenData((l) => l.length).value ?? 0,
+                  ),
+                ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.1, end: 0),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
               // Incoming requests card
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _IncomingRequestsCard(),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
+                ).animate().fadeIn(delay: 320.ms).slideY(begin: 0.1, end: 0),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -253,6 +268,92 @@ class _StatsRowSkeleton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SessionRequestsCard extends StatelessWidget {
+  final int pendingCount;
+  const _SessionRequestsCard({required this.pendingCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () =>
+          Navigator.pushNamed(context, AppRoutes.bookingRequests),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.event_note_rounded,
+                  color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('sessionRequests'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    context.tr('sessionRequestsSubtitle'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (pendingCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$pendingCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            else
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  color: AppColors.textHint, size: 16),
+          ],
+        ),
+      ),
     );
   }
 }
