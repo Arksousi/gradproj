@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/config/api_keys.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/helpers.dart';
@@ -13,7 +12,6 @@ import '../../../data/models/patient_model.dart';
 import '../../../domain/providers/therapist_provider.dart';
 import '../../widgets/common/custom_button.dart';
 
-const _kGroqApiKey = kGroqApiKey;
 
 /// Screen showing full patient details for a therapist.
 /// Accepts a [PatientModel] via route arguments.
@@ -183,10 +181,7 @@ class PatientDetailScreen extends ConsumerWidget {
           context, 'Patient has not submitted an assessment yet.');
       return;
     }
-    await ref.read(aiSummaryProvider.notifier).summarize(
-          patient: patient,
-          apiKey: _kGroqApiKey,
-        );
+    await ref.read(aiSummaryProvider.notifier).summarize(patient: patient);
     if (context.mounted) {
       final state = ref.read(aiSummaryProvider);
       if (state.errorMessage != null) {

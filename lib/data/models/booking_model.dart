@@ -9,10 +9,14 @@ class BookingRequest {
   final String patientName;
   final String therapistId;
   final String therapistName;
-  final String status; // 'pending' | 'confirmed' | 'declined'
+  // status values: 'pending' | 'confirmed' | 'declined'
+  //   | 'cancelled_by_patient' | 'cancelled_by_therapist' | 'reschedule_requested'
+  final String status;
   final DateTime requestedAt;
   final String sessionType; // 'chat' | 'video' | 'in-person'
   final bool consentGiven;
+  final String? cancelReason;
+  final String? rescheduleNote;
 
   const BookingRequest({
     required this.id,
@@ -24,6 +28,8 @@ class BookingRequest {
     required this.requestedAt,
     required this.sessionType,
     required this.consentGiven,
+    this.cancelReason,
+    this.rescheduleNote,
   });
 
   factory BookingRequest.fromMap(String id, Map<String, dynamic> map) =>
@@ -38,6 +44,8 @@ class BookingRequest {
             (map['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         sessionType: map['sessionType'] as String? ?? 'chat',
         consentGiven: map['consentGiven'] as bool? ?? false,
+        cancelReason: map['cancelReason'] as String?,
+        rescheduleNote: map['rescheduleNote'] as String?,
       );
 
   Map<String, dynamic> toMap() => {
@@ -49,5 +57,7 @@ class BookingRequest {
         'requestedAt': Timestamp.fromDate(requestedAt),
         'sessionType': sessionType,
         'consentGiven': consentGiven,
+        if (cancelReason != null) 'cancelReason': cancelReason,
+        if (rescheduleNote != null) 'rescheduleNote': rescheduleNote,
       };
 }

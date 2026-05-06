@@ -2,13 +2,10 @@
 // State machine for the 5-step AI Emotional Support flow inside DescriptionScreen.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/config/api_keys.dart';
 import '../../core/services/groq_service.dart';
 import '../../data/repositories/patient_repository.dart';
 import 'auth_provider.dart';
 import 'patient_provider.dart';
-
-const _kGroqApiKey = kGroqApiKey;
 
 enum SupportStep {
   input,                // Patient is typing
@@ -97,7 +94,7 @@ class EmotionalSupportNotifier
     state = state.copyWith(step: SupportStep.loadingWelcome);
     try {
       final response = await _groq.getEmotionalSupportWelcome(
-        apiKey: _kGroqApiKey,
+
         patientText: patientText,
       );
       state = state.copyWith(
@@ -123,7 +120,7 @@ class EmotionalSupportNotifier
     state = state.copyWith(secondMessage: secondMessage, step: SupportStep.loadingComfort);
     try {
       final response = await _groq.getEmotionalComfort(
-        apiKey: _kGroqApiKey,
+
         firstMessage: firstMessage,
         secondMessage: secondMessage,
       );
@@ -152,7 +149,7 @@ class EmotionalSupportNotifier
     state = state.copyWith(wantedHelp: false, step: SupportStep.loadingNoHelpClosing);
     try {
       final response = await _groq.getNoHelpClosing(
-        apiKey: _kGroqApiKey,
+
         patientText: patientText,
       );
       state = state.copyWith(step: SupportStep.noHelpClosing, noHelpResponse: response);
@@ -181,7 +178,7 @@ class EmotionalSupportNotifier
     state = state.copyWith(step: SupportStep.loadingMethod);
     try {
       final response = await _groq.getMethodGuidance(
-        apiKey: _kGroqApiKey,
+
         patientText: patientText,
         method: state.selectedMethod!,
       );
@@ -263,7 +260,7 @@ class EmotionalSupportNotifier
 
     try {
       final response = await _groq.getStrugglingResponse(
-        apiKey: _kGroqApiKey,
+
         patientText: firstMessage,
       );
       state = state.copyWith(

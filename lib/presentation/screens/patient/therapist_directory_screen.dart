@@ -75,7 +75,7 @@ class _TherapistDirectoryScreenState
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            context.tr('takYourTime'),
+                            context.tr('takeYourTime'),
                             style:
                                 Theme.of(context).textTheme.bodySmall,
                           ),

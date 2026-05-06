@@ -2,9 +2,9 @@
 // Riverpod providers for therapist data and AI summary state management.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/services/groq_service.dart';
 import '../../data/models/patient_model.dart';
 import '../../data/models/therapist_model.dart';
+import '../../data/repositories/patient_repository.dart';
 import '../usecases/summarize_usecase.dart';
 import 'auth_provider.dart';
 import 'patient_provider.dart';
@@ -60,25 +60,26 @@ class AiSummaryState {
 
 class AiSummaryNotifier extends StateNotifier<AiSummaryState> {
   final SummarizeUseCase _summarizeUseCase;
+  final PatientRepository _patientRepo;
 
-  AiSummaryNotifier()
+  AiSummaryNotifier(this._patientRepo)
       : _summarizeUseCase = SummarizeUseCase(),
         super(const AiSummaryState());
 
-  /// Calls the Groq API to generate a summary for [patient].
-  /// [apiKey] should be provided securely by the caller.
-  Future<void> summarize({
-    required PatientModel patient,
-    required String apiKey,
-  }) async {
+  /// Calls the backend to generate a summary for [patient] and persists it.
+  Future<void> summarize({required PatientModel patient}) async {
     state = state.copyWith(isLoading: true, clearError: true, clearSummary: true);
     try {
       final summary = await _summarizeUseCase(SummarizeParams(
-        groqApiKey: apiKey,
         assessmentAnswers: patient.assessment,
         patientDescription: patient.description,
       ));
       state = state.copyWith(summary: summary, isLoading: false);
+      try {
+        await _patientRepo.saveAiSummary(uid: patient.uid, summary: summary);
+      } catch (_) {
+        // Non-fatal — summary is shown in UI even if Firestore write fails
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -96,10 +97,6 @@ class AiSummaryNotifier extends StateNotifier<AiSummaryState> {
 final aiSummaryProvider =
     StateNotifierProvider.autoDispose<AiSummaryNotifier, AiSummaryState>(
         (ref) {
-  return AiSummaryNotifier();
+  return AiSummaryNotifier(ref.watch(patientRepositoryProvider));
 });
 
-/// Convenience provider for the Groq service singleton.
-final groqServiceProvider = Provider<GroqService>((ref) {
-  return GroqService.instance;
-});

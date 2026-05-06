@@ -46,6 +46,48 @@ class BookingRepository {
         .update({'status': 'declined'});
   }
 
+  Future<void> cancelBooking(String bookingId,
+      {required String cancelledBy, String? reason}) async {
+    await _firebase.firestore
+        .collection('booking_requests')
+        .doc(bookingId)
+        .update({
+      'status': 'cancelled_by_$cancelledBy',
+      if (reason != null && reason.isNotEmpty) 'cancelReason': reason,
+    });
+  }
+
+  Future<void> requestReschedule(String bookingId, String note) async {
+    await _firebase.firestore
+        .collection('booking_requests')
+        .doc(bookingId)
+        .update({
+      'status': 'reschedule_requested',
+      'rescheduleNote': note,
+    });
+  }
+
+  Future<void> confirmReschedule(String bookingId) async {
+    await _firebase.firestore
+        .collection('booking_requests')
+        .doc(bookingId)
+        .update({'status': 'confirmed'});
+  }
+
+  Stream<List<BookingRequest>> streamConfirmedBookings(String therapistId) {
+    return _firebase.firestore
+        .collection('booking_requests')
+        .where('therapistId', isEqualTo: therapistId)
+        .where('status', isEqualTo: 'confirmed')
+        .snapshots()
+        .map((snap) {
+      final bookings =
+          snap.docs.map((d) => BookingRequest.fromMap(d.id, d.data())).toList();
+      bookings.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+      return bookings;
+    });
+  }
+
   Stream<List<BookingRequest>> streamPatientBookings(String patientId) {
     return _firebase.firestore
         .collection('booking_requests')

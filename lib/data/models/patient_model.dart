@@ -25,6 +25,10 @@ class PatientModel {
   /// Timestamp of when the assessment was submitted.
   final DateTime? submittedAt;
 
+  /// AI-generated clinical summary stored after therapist generates it.
+  /// Null if never generated.
+  final String? aiSummary;
+
   const PatientModel({
     required this.uid,
     required this.name,
@@ -33,6 +37,7 @@ class PatientModel {
     required this.description,
     required this.therapistId,
     this.submittedAt,
+    this.aiSummary,
   });
 
   // --- Serialization ---
@@ -49,6 +54,7 @@ class PatientModel {
       submittedAt: map['submittedAt'] is Timestamp
           ? (map['submittedAt'] as Timestamp).toDate()
           : null,
+      aiSummary: map['aiSummary'] as String?,
     );
   }
 
@@ -62,6 +68,7 @@ class PatientModel {
       'submittedAt': submittedAt != null
           ? Timestamp.fromDate(submittedAt!)
           : FieldValue.serverTimestamp(),
+      if (aiSummary != null) 'aiSummary': aiSummary,
     };
   }
 

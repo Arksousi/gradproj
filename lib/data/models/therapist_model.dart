@@ -7,13 +7,11 @@ class TherapistModel {
   final String name;
   final String email;
 
-  /// List of patient UIDs assigned to this therapist.
   final List<String> patients;
 
   final String specialization;
   final String bio;
 
-  // Extended profile fields
   final String nationality;
   final int age;
   final int yearsOfExperience;

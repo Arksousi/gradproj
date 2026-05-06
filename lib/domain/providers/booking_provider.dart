@@ -92,11 +92,35 @@ class BookingActionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _repo.declineBooking(bookingId));
   }
+
+  Future<void> cancel(String bookingId,
+      {required String cancelledBy, String? reason}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() =>
+        _repo.cancelBooking(bookingId, cancelledBy: cancelledBy, reason: reason));
+  }
+
+  Future<void> requestReschedule(String bookingId, String note) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _repo.requestReschedule(bookingId, note));
+  }
+
+  Future<void> confirmReschedule(String bookingId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _repo.confirmReschedule(bookingId));
+  }
 }
 
 final bookingActionProvider =
     StateNotifierProvider.autoDispose<BookingActionNotifier, AsyncValue<void>>(
   (ref) => BookingActionNotifier(ref.read(bookingRepositoryProvider)),
+);
+
+// ── Therapist-side: stream confirmed sessions ────────────────────────────────
+final confirmedBookingsProvider =
+    StreamProvider.autoDispose.family<List<BookingRequest>, String>(
+  (ref, therapistId) =>
+      ref.read(bookingRepositoryProvider).streamConfirmedBookings(therapistId),
 );
 
 final bookingProvider =

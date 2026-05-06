@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
+import 'core/services/notification_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -31,6 +32,10 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize notification service (FCM + local notifications)
+  await NotificationService.instance.initialize();
+  NotificationService.instance.setNavigatorKey(appNavigatorKey);
 
   // Wrap the entire app in ProviderScope to enable Riverpod state management
   runApp(

@@ -7,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/services/crisis_detection_service.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/models/therapist_model.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/providers/auth_provider.dart';
 import '../../../domain/providers/chat_provider.dart';
+import '../../widgets/common/crisis_banner.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -26,14 +28,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   late String _sessionId;
   late String _therapistId;
   bool _sessionEndedHandled = false;
+  bool _crisisDetected = false;
+  DateTime? _lastCrisisCheck;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, String>?;
-    _sessionId = args?['sessionId'] ?? '';
-    _therapistId = args?['therapistId'] ?? '';
+    if (args == null || args['sessionId'] == null || args['therapistId'] == null) {
+      // Missing route args — go back safely instead of crashing.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) { Navigator.of(context).pop(); }
+      });
+      _sessionId = '';
+      _therapistId = '';
+      return;
+    }
+    _sessionId = args['sessionId']!;
+    _therapistId = args['therapistId']!;
   }
 
   @override
@@ -55,6 +68,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           text: text,
         );
     _scrollToBottom();
+    _checkCrisis(text);
+  }
+
+  Future<void> _checkCrisis(String text) async {
+    if (_crisisDetected) return;
+    if (text.length <= 10) return;
+    final now = DateTime.now();
+    if (_lastCrisisCheck != null &&
+        now.difference(_lastCrisisCheck!) < const Duration(seconds: 3)) { return; }
+    _lastCrisisCheck = now;
+    final detected = await CrisisDetectionService.instance.isCrisis(text);
+    if (detected && mounted) setState(() => _crisisDetected = true);
   }
 
   void _scrollToBottom() {
@@ -188,6 +213,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   error: (e, _) => Center(child: Text(e.toString())),
                 ),
               ),
+              if (_crisisDetected)
+                CrisisBanner(
+                  onDismiss: () => setState(() => _crisisDetected = false),
+                ),
               if (!isEnded) _InputBar(
                 controller: _textController,
                 onSend: _sendMessage,

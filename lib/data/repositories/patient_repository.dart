@@ -140,6 +140,18 @@ class PatientRepository implements PatientRepositoryBase {
     }
   }
 
+  /// Persists the AI-generated clinical summary to the patient's Firestore doc.
+  Future<void> saveAiSummary({
+    required String uid,
+    required String summary,
+  }) async {
+    try {
+      await _firebase.updateDocument('patients', uid, {'aiSummary': summary});
+    } catch (e) {
+      throw Exception('Failed to save AI summary: $e');
+    }
+  }
+
   /// Returns a real-time stream of all patients for a given therapist.
   Stream<List<PatientModel>> watchPatientsForTherapist(String therapistId) {
     return _firebase.firestore

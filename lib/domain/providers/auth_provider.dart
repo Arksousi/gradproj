@@ -2,6 +2,7 @@
 // Riverpod providers for authentication state management.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/notification_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../usecases/login_usecase.dart';
@@ -78,6 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _loginUseCase(
           LoginParams(email: email, password: password));
       state = state.copyWith(user: user, isLoading: false);
+      NotificationService.instance.saveToken(user.uid);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -102,6 +104,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         role: role,
       ));
       state = state.copyWith(user: user, isLoading: false);
+      NotificationService.instance.saveToken(user.uid);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -112,6 +115,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Signs out the current user and clears state.
   Future<void> signOut() async {
+    final uid = state.user?.uid;
+    if (uid != null) await NotificationService.instance.clearToken(uid);
     await _repository.signOut();
     state = const AuthState();
   }

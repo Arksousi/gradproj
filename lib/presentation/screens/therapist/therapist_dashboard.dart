@@ -9,6 +9,7 @@ import '../../../core/constants/app_routes.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../domain/providers/auth_provider.dart';
 import '../../../domain/providers/booking_provider.dart';
+import '../../../domain/providers/chatbot_provider.dart';
 import '../../../domain/providers/therapist_provider.dart';
 
 /// Therapist home screen showing a summary of their patient load.
@@ -21,6 +22,8 @@ class TherapistDashboard extends ConsumerWidget {
     final patientsAsync = ref.watch(therapistPatientsProvider);
     final pendingBookings =
         ref.watch(pendingBookingsProvider(user?.uid ?? ''));
+    final unreadAlerts =
+        ref.watch(unreadAlertsCountProvider(user?.uid ?? ''));
 
     return Scaffold(
       body: Container(
@@ -69,6 +72,43 @@ class TherapistDashboard extends ConsumerWidget {
                         ),
                       ).animate().fadeIn(duration: 400.ms).slideX(
                           begin: -0.1, end: 0),
+                      // Red flag alerts badge
+                      Stack(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pushNamed(
+                                context, AppRoutes.redFlagAlerts),
+                            icon: const Icon(Icons.warning_amber_rounded,
+                                color: AppColors.error),
+                            tooltip: context.tr('redFlagAlertsTitle'),
+                          ),
+                          if ((unreadAlerts.value ?? 0) > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: AppColors.surface, width: 1.5),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${unreadAlerts.value}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                       // Settings button
                       IconButton(
                         onPressed: () => Navigator.pushNamed(

@@ -106,6 +106,19 @@ class PatientDashboard extends ConsumerWidget {
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
               ),
 
+              // AI Insights card (only when therapist has generated a summary)
+              SliverToBoxAdapter(
+                child: patientAsync.whenData((patient) {
+                  if (patient?.aiSummary == null || patient!.aiSummary!.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                    child: _AiInsightsCard(summary: patient.aiSummary!),
+                  ).animate().fadeIn(delay: 230.ms).slideY(begin: 0.1, end: 0);
+                }).value ?? const SizedBox.shrink(),
+              ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // Booking status card (only when there's an active booking)
@@ -163,13 +176,13 @@ class PatientDashboard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 14),
                     _ActionCard(
-                      icon: Icons.edit_note_rounded,
-                      title: context.tr('describeYourFeelings'),
-                      subtitle: context.tr('writeAboutMind'),
+                      icon: Icons.favorite_rounded,
+                      title: context.tr('talkToAI'),
+                      subtitle: context.tr('talkToAISubtitle'),
                       color: AppColors.accent,
                       delay: 500,
                       onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.description),
+                          Navigator.pushNamed(context, AppRoutes.chatbot),
                     ),
                     const SizedBox(height: 14),
                     _ActionCard(
@@ -219,56 +232,246 @@ class PatientDashboard extends ConsumerWidget {
 // Booking status card
 // ---------------------------------------------------------------------------
 
-class _BookingStatusCard extends StatelessWidget {
+class _BookingStatusCard extends ConsumerWidget {
   final dynamic booking; // BookingRequest
 
   const _BookingStatusCard({required this.booking});
 
+  ({Color color, IconData icon, String labelKey}) _statusMeta(String status) {
+    switch (status) {
+      case 'confirmed':
+        return (
+          color: AppColors.success,
+          icon: Icons.check_circle_rounded,
+          labelKey: 'bookingStatusConfirmed'
+        );
+      case 'declined':
+        return (
+          color: AppColors.error,
+          icon: Icons.cancel_rounded,
+          labelKey: 'bookingStatusDeclined'
+        );
+      case 'cancelled_by_patient':
+        return (
+          color: AppColors.textSecondary,
+          icon: Icons.block_rounded,
+          labelKey: 'bookingStatusCancelledPatient'
+        );
+      case 'cancelled_by_therapist':
+        return (
+          color: AppColors.error,
+          icon: Icons.block_rounded,
+          labelKey: 'bookingStatusCancelledTherapist'
+        );
+      case 'reschedule_requested':
+        return (
+          color: AppColors.primary,
+          icon: Icons.schedule_rounded,
+          labelKey: 'bookingStatusRescheduleRequested'
+        );
+      default: // pending
+        return (
+          color: AppColors.warning,
+          icon: Icons.hourglass_top_rounded,
+          labelKey: 'bookingStatusPending'
+        );
+    }
+  }
+
+  Future<void> _showCancelDialog(
+      BuildContext context, WidgetRef ref) async {
+    final reasonCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(context.tr('cancelBookingTitle')),
+        content: TextField(
+          controller: reasonCtrl,
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: context.tr('cancelBookingHint'),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.tr('cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(context.tr('cancelBookingConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      await ref.read(bookingActionProvider.notifier).cancel(
+            booking.id,
+            cancelledBy: 'patient',
+            reason: reasonCtrl.text.trim(),
+          );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.tr('bookingCancelledSnack')),
+          backgroundColor: AppColors.textSecondary,
+        ));
+      }
+    }
+  }
+
+  Future<void> _showRescheduleDialog(
+      BuildContext context, WidgetRef ref) async {
+    final noteCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(context.tr('rescheduleTitle')),
+        content: TextField(
+          controller: noteCtrl,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: context.tr('rescheduleHint'),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.tr('cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(context.tr('rescheduleConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      await ref
+          .read(bookingActionProvider.notifier)
+          .requestReschedule(booking.id, noteCtrl.text.trim());
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.tr('rescheduleSentSnack')),
+          backgroundColor: AppColors.primary,
+        ));
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final isPending = booking.status == 'pending';
-    final color = isPending ? AppColors.warning : AppColors.success;
-    final icon = isPending ? Icons.hourglass_top_rounded : Icons.check_circle_rounded;
-    final therapistLabel = booking.therapistName.isNotEmpty
-        ? booking.therapistName
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = (booking.status as String?) ?? 'pending';
+    final meta = _statusMeta(status);
+    final therapistLabel = ((booking.therapistName as String?) ?? '').isNotEmpty
+        ? booking.therapistName as String
         : context.tr('yourTherapist');
+    final isActionable =
+        status == 'pending' || status == 'confirmed';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: meta.color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+        border: Border.all(color: meta.color.withValues(alpha: 0.35)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            children: [
+              Icon(meta.icon, color: meta.color, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.tr(meta.labelKey),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: meta.color,
+                      ),
+                    ),
+                    Text(
+                      therapistLabel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (isActionable) ...[
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Text(
-                  isPending
-                      ? context.tr('bookingStatusPending')
-                      : context.tr('bookingStatusConfirmed'),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: color,
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showCancelDialog(context, ref),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(
+                          color: AppColors.error.withValues(alpha: 0.5)),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    child: Text(context.tr('cancelBooking')),
                   ),
                 ),
-                Text(
-                  therapistLabel,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showRescheduleDialog(context, ref),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.5)),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    child: Text(context.tr('requestReschedule')),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
+          ],
+          if (status == 'reschedule_requested' &&
+              (booking.rescheduleNote as String?)?.isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Text(
+              '${context.tr('rescheduleNote')}: ${booking.rescheduleNote}',
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
         ],
       ),
     );
@@ -518,5 +721,74 @@ class _ActionCard extends StatelessWidget {
         .animate()
         .fadeIn(delay: delay.ms, duration: 300.ms)
         .slideX(begin: 0.05, end: 0);
+  }
+}
+
+class _AiInsightsCard extends StatelessWidget {
+  final String summary;
+
+  const _AiInsightsCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.accent.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome_rounded,
+                    color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                context.tr('aiInsights'),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              const Text(
+                'Groq · Llama 3.3',
+                style: TextStyle(fontSize: 10, color: AppColors.textHint),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            summary,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

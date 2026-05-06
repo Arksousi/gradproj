@@ -17,7 +17,8 @@ import 'presentation/screens/patient/assessment_intro_screen.dart';
 import 'presentation/screens/patient/assessment_screen.dart';
 import 'presentation/screens/patient/booking_consent_screen.dart';
 import 'presentation/screens/patient/chat_screen.dart';
-import 'presentation/screens/patient/description_screen.dart';
+import 'presentation/screens/chatbot/chatbot_screen.dart';
+import 'presentation/screens/therapist/red_flag_alerts_screen.dart';
 import 'presentation/screens/patient/immediate_chat_waiting_screen.dart';
 import 'presentation/screens/patient/patient_dashboard.dart';
 import 'presentation/screens/patient/post_assessment_screen.dart';
@@ -31,6 +32,9 @@ import 'presentation/screens/therapist/patient_detail_screen.dart';
 import 'presentation/screens/therapist/patient_list_screen.dart';
 import 'presentation/screens/therapist/therapist_dashboard.dart';
 
+/// Global navigator key — used by NotificationService to navigate on tap.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 /// The root [ConsumerWidget] of PsyCare.
 /// Wraps [MaterialApp] with theme, locale, and named route table.
 class PsyCareApp extends ConsumerWidget {
@@ -41,6 +45,7 @@ class PsyCareApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -69,7 +74,8 @@ class PsyCareApp extends ConsumerWidget {
         AppRoutes.assessmentIntro: (_) => const AssessmentIntroScreen(),
         AppRoutes.assessment: (_) => const AssessmentScreen(),
         AppRoutes.assessmentComplete: (_) => const AssessmentCompleteScreen(),
-        AppRoutes.description: (_) => const DescriptionScreen(),
+        AppRoutes.chatbot: (_) => const ChatbotScreen(),
+        AppRoutes.redFlagAlerts: (_) => const RedFlagAlertsScreen(),
         AppRoutes.aiSummary: (_) => const AiSummaryScreen(),
         AppRoutes.postAssessment: (_) => const PostAssessmentScreen(),
         AppRoutes.immediateChatWaiting: (_) =>

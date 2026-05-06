@@ -14,7 +14,6 @@ class AppRoutes {
   static const String assessmentIntro = '/assessment-intro';
   static const String assessment = '/assessment';
   static const String assessmentComplete = '/assessment-complete';
-  static const String description = '/description';
 
   // Therapist routes
   static const String therapistDashboard = '/therapist-dashboard';
@@ -35,6 +34,10 @@ class AppRoutes {
   // New therapist routes
   static const String incomingRequests = '/incoming-requests';
   static const String bookingRequests = '/booking-requests';
+  static const String redFlagAlerts = '/red-flag-alerts';
+
+  // Chatbot
+  static const String chatbot = '/chatbot';
 
   // Shared routes
   static const String settings = '/settings';
